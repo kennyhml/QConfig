@@ -15,7 +15,7 @@ Assuming that each `widget.objectName()` matches the key it is hooked to in the 
 user_data_qconfig = QConfig(user_data, widgets, recursive=False)
 ```
 ## With QConfigDynamicLoader
-The QConfigDynamicLoader allows you to dynamically hook a dataset to the widgets even if the keys dont match, by giving the loader widget to search for.
+The QConfigDynamicLoader allows you to dynamically hook a dataset to the widgets even if the keys dont match, by guiding the loader to the widget to search for.
 Taking the above example:
 ```py
 user_data: dict[str, any] = {"user_name": "Jake", "age": 18, "of_age": True, "IQ": 10}
