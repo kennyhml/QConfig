@@ -16,7 +16,7 @@ class QConfigDynamicLoader:
     ----------
     data :class:`dict[str, str] | list[str]`:
         The data to build the loader with, either a dictionary mapping each key
-        to its corresponding widget directlry, or a list of keys to be mapped
+        to its corresponding widget directly, or a list of keys to be mapped
 
     suppress_errors :class:`list[str]`:
         A list of keys to suppress errors for
@@ -36,7 +36,7 @@ class QConfigDynamicLoader:
 
     def build(self, widgets: list[QWidget]) -> None:
         """Builds the loader with a list of available widgets.
-        
+
         Parameters
         ----------
         widgets :class:`QWidget`:
@@ -59,7 +59,7 @@ class QConfigDynamicLoader:
 
         if not self.show_build:
             return
-        print(f"Building successful!\n{json.dumps(self.data, indent=4)}")
+        print(f"Building successful!\n{json.dumps(self.built_data, indent=4)}")
 
     def _validate_key_presence(self, widgets: list[str]) -> None:
         """Helper method to validate that all values in the data are existing
@@ -72,17 +72,13 @@ class QConfigDynamicLoader:
             if k in self.suppress_errors or v in widgets:
                 continue
 
-            if self.complement_keys:
-                closest_match = difflib.get_close_matches(
-                k, widgets, n=1, cutoff=0.6
-            )
-                if closest_match:
-                    self.data[k] = closest_match[0]
-                    continue
+            # try to add the missing key
+            if self.complement_keys and self._complement(self.data, k, widgets):
+                continue
 
-            raise InvalidWidgetMappingError(
-                f"Widget for '{k}': '{v}' not found or suppressed!"
-            )
+            raise InvalidWidgetMappingError(f"No matching widget for '{v}'")
+
+        self.built_data = self.data
 
     def _build_from_list(self, widgets: list[str]) -> None:
         """Helper method to build the data from the list of keys,
@@ -96,16 +92,37 @@ class QConfigDynamicLoader:
         remaining_widgets = [k for k in widgets if k not in matches.keys()]
 
         for k in remaining_keys:
-            closest_match = difflib.get_close_matches(
-                k, remaining_widgets, n=1, cutoff=0.6
-            )
-            if closest_match:
-                matches[k] = closest_match[0]
-
-            elif k in self.suppress_errors:
+            if self.complement_keys and self._complement(matches, k, remaining_widgets):
                 continue
-            else:
-                raise InvalidWidgetMappingError(
-                    f"Failed to find matching widget for '{k}'!"
-                )
-        self.data = matches
+
+            if k in self.suppress_errors:
+                continue
+
+            raise InvalidWidgetMappingError(f"No matching widget for '{k}'")
+        self.built_data = matches
+
+    @staticmethod
+    def _complement(data: dict, key: str, widgets: list[str]) -> bool:
+        """Adds a key to a dataset if a close match to the key is found in
+        the list of widges. If no match was found it simple does nothing.
+
+        Parameters
+        ----------
+        data :class:`dict`:
+            The dataset to add the key to
+
+        key :class:`str`:
+            The key to complement
+
+        widgets :class:`Str`:
+            A list of possibly matching widgets
+
+        Returns
+        -------
+        `bool`
+            Whether the key was complemented or not
+        """
+        matches = difflib.get_close_matches(key, widgets, n=1, cutoff=0.6)
+        if matches:
+            data[key] = matches[0]
+        return bool(matches)

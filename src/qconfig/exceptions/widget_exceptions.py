@@ -11,6 +11,16 @@ class UnknownWidgetError(LookupError):
         return f"Not yet supported widget: {type(self.widget).__name__}"
 
 
+class WidgetNotFoundError(LookupError):
+    """Raised when a widget could not be found"""
+
+    def __init__(self, key: str) -> None:
+        self.key = key
+
+    def __str__(self) -> str:
+        return f"Missing widget for {self.key}"
+
+
 class InvalidWidgetError(ValueError):
     """Raised when a widget is of a wrong type"""
 
