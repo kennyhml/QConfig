@@ -12,27 +12,27 @@ OBJECT_METHOD_MAP: dict[tuple[Type[QWidget], ...], dict[str, Callable[[Any], Any
     (QComboBox, QFontComboBox): {
         "save": lambda w: w.currentText,
         "load": lambda w: w.setCurrentText,
-        "callback": lambda w: w.currentIndexChanged.connect,
+        "callback": lambda w: w.currentIndexChanged,
     },
     (QCheckBox, QPushButton): {
         "save": lambda w: w.isChecked,
         "load": lambda w: w.setChecked,
-        "callback": lambda w: w.stateChanged.connect,
+        "callback": lambda w: w.stateChanged,
     },
     (QSpinBox, QDoubleSpinBox, QSlider, QProgressBar): {
         "save": lambda w: w.value,
         "load": lambda w: w.setValue,
-        "callback": lambda w: w.valueChanged.connect,
+        "callback": lambda w: w.valueChanged,
     },
     (QTextEdit, QPlainTextEdit, QTextBrowser, QLineEdit): {
         "save": lambda w: w.toPlainText,
         "load": lambda w: w.setText,
-        "callback": lambda w: w.textChanged.connect,
+        "callback": lambda w: w.textChanged,
     },
     (QTabWidget, QStackedWidget): {
         "save": lambda w: w.currentIndex,
         "load": lambda w: w.setCurrentIndex,
-        "callback": lambda w: w.currentChanged.connect,
+        "callback": lambda w: w.currentChanged,
     },
 }
 
