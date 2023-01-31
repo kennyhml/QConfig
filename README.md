@@ -21,7 +21,7 @@ Taking the above example:
 user_data: dict[str, any] = {"user_name": "Jake", "age": 18, "of_age": True, "IQ": 10}
 widgets: list[QWidget] = [user_name_widget, age_widget, of_age_checkbox, iq_spinbox]
 ```
-Assuming the `objectName()` properties of `user_name_widget` and `age_widget` were actually `"user"` and `age` instead, we could create a QConfigDynamicLoader to account for this:
+Assuming the `objectName()` properties of `user_name_widget` and `age_widget` were actually `"user"` and `"age"` instead, we could create a QConfigDynamicLoader to account for this:
 ```py
 loader = QConfigDynamicLoader({"user_name": "user", "age_widget": "age"}, show_build=True)
 user_data_qconfig = QConfig(user_data, widgets, loader, recursive=False)
