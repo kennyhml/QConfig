@@ -1,4 +1,4 @@
-from typing import Any, Callable, Literal, Optional
+from typing import Callable, Literal, Optional
 
 from PySide6.QtCore import SignalInstance
 from PySide6.QtWidgets import QWidget
@@ -10,7 +10,7 @@ from .exceptions import WidgetNotFoundError
 
 class QConfig:
     """Simple QConfig data container.
-    ------------------------------
+    ---------------------------------
     The QConfig class receives a dictionary of the configuration files which
     it is responsible of keeping in sync with the widgets.
     It is important that the widgets have the same `.objectName()`
@@ -43,7 +43,6 @@ class QConfig:
 
     # Expected widgets with the object names
     ['user_name', 'allow_foo', 'bar_value']
-
     ```
 
     With QConfigDynamicLoader:
@@ -78,14 +77,41 @@ class QConfig:
         else:
             self._build_widget_hooks_from_loader(data, widgets, loader)
 
-    def sync_data(self, data: Optional[dict] = None) -> None:
+    def load_data(self, data: Optional[dict] = None) -> None:
+        """Iterates over all items in the date and finds the corresponding widget,
+        then loads the value of the data into the widget
+
+        Parameters
+        ----------
+        data :class:`dict`:
+            The dictionary to read the data from, NOT a copy, if none is
+            passed it will load the instance data, allows for recursion
+
+        Raises
+        ------
+        `LookupError`
+            When the widget for a key in the date is missing
+        """
+        if data is None:
+            data = self._data
+
+        for k, v in data.items():
+            if isinstance(v, dict):
+                self._sync_values(v)
+                continue
+
+            method = self._find_method(k, "load")
+            method(v)
+
+    def get_data(self, data: Optional[dict] = None) -> None:
         """Iterates over all items in the date and finds the corresponding widget,
         then saves the value of the widget to the data.
 
         Parameters
         ----------
-        data :class:`dict`:
-            The dictionary to write the data to, NOT a copy
+        data :class:`dict` [Optional]:
+            The dictionary to write the data to, NOT a copy, if none is
+            passed it will load the instance data, allows for recursion
 
         Raises
         ------
