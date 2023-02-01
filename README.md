@@ -6,7 +6,7 @@ The very basic, surface scratching usage of QConfig
 ## With matching key - widget pairs
 The most straightforward way to use QConfig is to ensure that your configuration keys match the widget names in your GUI. Assuming we have the following structure:
 ```py
-user_data: dict[str, any] = {"user_name": "Jake", "age": 18, "of_age": True, "IQ": 10}
+user_data: dict[str, Any] = {"user_name": "Jake", "age": 18, "of_age": True, "IQ": 10}
 widgets: list[QWidget] = [user_name_widget, age_widget, of_age_checkbox, iq_spinbox]
 ```
 
