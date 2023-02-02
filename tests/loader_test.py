@@ -3,7 +3,7 @@ import unittest
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QSpinBox,
                                QTextEdit)
 
-from src.qconfig import QConfigDynamicLoader
+from qconfig import QConfigDynamicLoader
 
 
 class TestQDynamicLoaderTest(unittest.TestCase):

@@ -3,8 +3,8 @@ import unittest
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QSpinBox,
                                QTextEdit)
 
-from src.qconfig import QConfig
-from src.qconfig.dynamic_loader import QConfigDynamicLoader
+from qconfig import QConfig
+from qconfig import QConfigDynamicLoader
 
 
 class QConfigTest(unittest.TestCase):
