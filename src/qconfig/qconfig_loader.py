@@ -62,7 +62,6 @@ class QConfig:
     user_data_qconfig = QConfig(user_data, loader, recursive=False)
     ```
     """
-
     def __init__(
         self,
         name: str,

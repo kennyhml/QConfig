@@ -7,7 +7,7 @@ from qconfig import QConfig
 from qconfig import QConfigDynamicLoader
 
 
-class QConfigTest(unittest.TestCase):
+class TestQConfig(unittest.TestCase):
     data = {
         "age": 19,
         "nationality": "German",
@@ -16,7 +16,6 @@ class QConfigTest(unittest.TestCase):
     }
 
     def setUp(self) -> None:
-        _ = QApplication()
         self.age_widget = QSpinBox()
         self.age_widget.setObjectName("age")
         self.age_widget.setValue(0)
@@ -41,7 +40,7 @@ class QConfigTest(unittest.TestCase):
             self.date_of_birth,
         ]
 
-    def build_without_loader(self) -> None:
+    def test_build_without_loader(self) -> None:
         qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
         qconfig.load_data()
 
@@ -62,7 +61,7 @@ class QConfigTest(unittest.TestCase):
         assert self.employed_widget.isChecked() == self.data["employed"]
         assert self.date_of_birth.toPlainText() == self.data["date_of_birth"]
 
-    def build_with_loader(self) -> None:
+    def test_build_with_loader(self) -> None:
         self.employed_widget.setObjectName("has_work")
         self.age_widget.setObjectName("years_old")
         self.date_of_birth.setObjectName("born")
