@@ -22,6 +22,9 @@ class QConfig:
 
     Parameters
     ----------
+    name :class:`str`:
+        The name of the qconfig container
+
     data :class:`dict`:
         The dataset the qconfig class needs to handle
 
@@ -62,12 +65,14 @@ class QConfig:
 
     def __init__(
         self,
+        name: str,
         data: dict,
         widgets: list[QWidget],
         loader: Optional[QConfigDynamicLoader] = None,
         *,
         recursive: bool = True,
     ) -> None:
+        self.name = name
         self.recursive = recursive
         self._hooks: dict[str, dict[str, Callable | SignalInstance]] = {}
         self._data = data
@@ -76,6 +81,12 @@ class QConfig:
             self._build_widget_hooks(data, widgets)
         else:
             self._build_widget_hooks_from_loader(data, widgets, loader)
+
+    def __str__(self) -> str:
+        return f"QConfig '{self.name}', responsible for keys {list(self._data.keys())}"
+
+    def __repr__(self) -> str:
+        return f"QConfig(name='{self.name}', data={self._data}, hooks={self._hooks}, recursive={self.recursive})"
 
     def load_data(self, data: Optional[dict] = None) -> None:
         """Iterates over all items in the date and finds the corresponding widget,

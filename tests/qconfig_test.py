@@ -42,7 +42,7 @@ class QConfigTest(unittest.TestCase):
         ]
 
     def build_without_loader(self) -> None:
-        qconfig = QConfig(self.data, self.widgets, recursive=False)
+        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
         qconfig.load_data()
 
         assert self.age_widget.value() == self.data["age"]
@@ -75,7 +75,7 @@ class QConfigTest(unittest.TestCase):
             }
         )
 
-        qconfig = QConfig(self.data, self.widgets, loader, recursive=False)
+        qconfig = QConfig("TestConfig", self.data, self.widgets, loader, recursive=False)
         qconfig.load_data()
 
         assert self.age_widget.value() == self.data["age"]
