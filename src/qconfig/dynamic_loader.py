@@ -122,7 +122,7 @@ class QConfigDynamicLoader:
         `bool`
             Whether the key was complemented or not
         """
-        matches = difflib.get_close_matches(key, widgets, n=1, cutoff=0.6)
+        matches = difflib.get_close_matches(key, widgets, n=1, cutoff=0.43)
         if matches:
             data[key] = matches[0]
         return bool(matches)

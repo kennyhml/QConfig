@@ -111,6 +111,10 @@ class QConfig:
                 continue
 
             method = self._find_method(k, "load")
+            if method.__name__ == "<lambda>":
+                print(f"{method.__name__}({v})")
+                method(v)
+
             method(v)
 
     def get_data(self, data: Optional[dict] = None) -> None:

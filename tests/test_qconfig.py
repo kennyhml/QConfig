@@ -1,102 +1,122 @@
 import unittest
 
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QSpinBox,
-                               QTextEdit)
+from qconfig import QConfig, QConfigDynamicLoader
+from qconfig.tools import get_all_widgets
 
-from qconfig import QConfig
-from qconfig import QConfigDynamicLoader
+from .sampel_ui import SampleUi
 
 
 class TestQConfig(unittest.TestCase):
     data = {
-        "age": 19,
+        "user_name": "Kenny",
         "nationality": "German",
         "employed": False,
         "date_of_birth": "03.01.2004",
+        "place_of_birth": "Germany",
+        "married": False,
+        "drivers_license": False,
+        "disabled": False,
+        "kids": 0,
+        "happiness": 10,
+        "school_average": 2.3,
+        "reason_of_application": "Fun",
     }
 
     def setUp(self) -> None:
-        self.age_widget = QSpinBox()
-        self.age_widget.setObjectName("age")
-        self.age_widget.setValue(0)
-
-        self.nationality_widget = QComboBox()
-        self.nationality_widget.setObjectName("nationality")
-        self.nationality_widget.setCurrentText("French")
-        self.nationality_widget.setEditable(True)
-
-        self.employed_widget = QCheckBox()
-        self.employed_widget.setObjectName("employed")
-        self.employed_widget.setChecked(True)
-
-        self.date_of_birth = QTextEdit()
-        self.date_of_birth.setObjectName("date_of_birth")
-        self.date_of_birth.setText("18.02.1982")
-
-        self.widgets = [
-            self.age_widget,
-            self.nationality_widget,
-            self.employed_widget,
-            self.date_of_birth,
-        ]
+        self.ui = SampleUi()
+        self.widgets = get_all_widgets(self.ui)
 
     def test_build_without_loader(self) -> None:
         qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
         qconfig.load_data()
 
-        assert self.age_widget.value() == self.data["age"]
-        assert self.nationality_widget.currentText() == self.data["nationality"]
-        assert self.employed_widget.isChecked() == self.data["employed"]
-        assert self.date_of_birth.toPlainText() == self.data["date_of_birth"]
+        assert self.ui.user_name.text() == self.data["user_name"]
+        assert self.ui.nationality.currentText() == self.data["nationality"]
+        assert self.ui.employed.isChecked() == self.data["employed"]
+        assert self.ui.date_of_birth.text() == self.data["date_of_birth"]
+        assert self.ui.place_of_birth.text() == self.data["place_of_birth"]
+        assert self.ui.drivers_license.isChecked() == self.data["drivers_license"]
+        assert self.ui.married.isChecked() == self.data["married"]
+        assert self.ui.disabled.isChecked() == self.data["disabled"]
 
-        self.age_widget.setValue(0)
-        self.nationality_widget.setCurrentText("French")
-        self.employed_widget.setChecked(True)
-        self.date_of_birth.setText("18.02.1982")
+        assert self.ui.school_average.value() == self.data["school_average"]
+        assert self.ui.happiness.value() == self.data["happiness"]
+        assert self.ui.kids.value() == self.data["kids"]
+        assert (
+            self.ui.reason_of_application.toPlainText()
+            == self.data["reason_of_application"]
+        )
 
         qconfig.get_data()
 
-        assert self.age_widget.value() == self.data["age"]
-        assert self.nationality_widget.currentText() == self.data["nationality"]
-        assert self.employed_widget.isChecked() == self.data["employed"]
-        assert self.date_of_birth.toPlainText() == self.data["date_of_birth"]
+        assert self.data["user_name"] == self.ui.user_name.text()
+        assert self.data["nationality"] == self.ui.nationality.currentText()
+        assert self.data["employed"] == self.ui.employed.isChecked()
+        assert self.data["date_of_birth"] == self.ui.date_of_birth.text()
+        assert self.data["place_of_birth"] == self.ui.place_of_birth.text()
+        assert self.data["drivers_license"] == self.ui.drivers_license.isChecked()
+        assert self.data["married"] == self.ui.married.isChecked()
+        assert self.data["disabled"] == self.ui.disabled.isChecked()
+        assert self.data["school_average"] == self.ui.school_average.value()
+        assert self.data["happiness"] == self.ui.happiness.value()
+        assert self.data["kids"] == self.ui.kids.value()
+        assert (
+            self.data["reason_of_application"]
+            == self.ui.reason_of_application.toPlainText()
+        )
 
     def test_build_with_loader(self) -> None:
-        self.employed_widget.setObjectName("has_work")
-        self.age_widget.setObjectName("years_old")
-        self.date_of_birth.setObjectName("born")
+        self.ui.employed.setObjectName("has_work")
+        self.ui.date_of_birth.setObjectName("born_in")
+        self.ui.disabled.setObjectName("has_disability")
 
         loader = QConfigDynamicLoader(
             data={
-                "age": "years_old",
-                "date_of_birth": "born",
                 "employed": "has_work",
+                "date_of_birth": "born_in",
+                "disabled": "has_disability",
             }
         )
 
-        qconfig = QConfig("TestConfig", self.data, self.widgets, loader, recursive=False)
+        qconfig = QConfig(
+            "TestConfig", self.data, self.widgets, loader, recursive=False
+        )
         qconfig.load_data()
 
-        assert self.age_widget.value() == self.data["age"]
-        assert self.nationality_widget.currentText() == self.data["nationality"]
-        assert self.employed_widget.isChecked() == self.data["employed"]
-        assert self.date_of_birth.toPlainText() == self.data["date_of_birth"]
+        assert self.ui.user_name.text() == self.data["user_name"]
+        assert self.ui.nationality.currentText() == self.data["nationality"]
+        assert self.ui.employed.isChecked() == self.data["employed"]
+        assert self.ui.date_of_birth.text() == self.data["date_of_birth"]
+        assert self.ui.place_of_birth.text() == self.data["place_of_birth"]
+        assert self.ui.drivers_license.isChecked() == self.data["drivers_license"]
+        assert self.ui.married.isChecked() == self.data["married"]
+        assert self.ui.disabled.isChecked() == self.data["disabled"]
 
-        self.age_widget.setValue(0)
-        self.nationality_widget.setCurrentText("French")
-        self.employed_widget.setChecked(True)
-        self.date_of_birth.setText("18.02.1982")
+        assert self.ui.school_average.value() == self.data["school_average"]
+        assert self.ui.happiness.value() == self.data["happiness"]
+        assert self.ui.kids.value() == self.data["kids"]
+        assert (
+            self.ui.reason_of_application.toPlainText()
+            == self.data["reason_of_application"]
+        )
 
         qconfig.get_data()
 
-        assert self.age_widget.value() == self.data["age"]
-        assert self.nationality_widget.currentText() == self.data["nationality"]
-        assert self.employed_widget.isChecked() == self.data["employed"]
-        assert self.date_of_birth.toPlainText() == self.data["date_of_birth"]
-
-        self.employed_widget.setObjectName("employed")
-        self.age_widget.setObjectName("age")
-        self.date_of_birth.setObjectName("date_of_birth")
+        assert self.data["user_name"] == self.ui.user_name.text()
+        assert self.data["nationality"] == self.ui.nationality.currentText()
+        assert self.data["employed"] == self.ui.employed.isChecked()
+        assert self.data["date_of_birth"] == self.ui.date_of_birth.text()
+        assert self.data["place_of_birth"] == self.ui.place_of_birth.text()
+        assert self.data["drivers_license"] == self.ui.drivers_license.isChecked()
+        assert self.data["married"] == self.ui.married.isChecked()
+        assert self.data["disabled"] == self.ui.disabled.isChecked()
+        assert self.data["school_average"] == self.ui.school_average.value()
+        assert self.data["happiness"] == self.ui.happiness.value()
+        assert self.data["kids"] == self.ui.kids.value()
+        assert (
+            self.data["reason_of_application"]
+            == self.ui.reason_of_application.toPlainText()
+        )
 
 
 if __name__ == "__main__":

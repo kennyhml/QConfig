@@ -1,10 +1,24 @@
 from typing import Any, Callable, Literal, Type
 
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox,
-                               QFontComboBox, QLineEdit, QPlainTextEdit,
-                               QProgressBar, QPushButton, QSlider, QSpinBox,
-                               QStackedWidget, QTabWidget, QTextBrowser,
-                               QTextEdit, QWidget)
+from PySide6.QtCore import QDate
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDateEdit,
+    QDoubleSpinBox,
+    QFontComboBox,
+    QLineEdit,
+    QPlainTextEdit,
+    QProgressBar,
+    QPushButton,
+    QSlider,
+    QSpinBox,
+    QStackedWidget,
+    QTabWidget,
+    QTextBrowser,
+    QTextEdit,
+    QWidget,
+)
 
 from .exceptions import UnknownWidgetError
 
@@ -24,8 +38,13 @@ OBJECT_METHOD_MAP: dict[tuple[Type[QWidget], ...], dict[str, Callable[[Any], Any
         "load": lambda w: w.setValue,
         "callback": lambda w: w.valueChanged,
     },
-    (QTextEdit, QPlainTextEdit, QTextBrowser, QLineEdit): {
+    (QTextEdit, QPlainTextEdit, QTextBrowser): {
         "save": lambda w: w.toPlainText,
+        "load": lambda w: w.setText,
+        "callback": lambda w: w.textChanged,
+    },
+    (QLineEdit,): {
+        "save": lambda w: w.text,
         "load": lambda w: w.setText,
         "callback": lambda w: w.textChanged,
     },
@@ -33,6 +52,13 @@ OBJECT_METHOD_MAP: dict[tuple[Type[QWidget], ...], dict[str, Callable[[Any], Any
         "save": lambda w: w.currentIndex,
         "load": lambda w: w.setCurrentIndex,
         "callback": lambda w: w.currentChanged,
+    },
+    (QDateEdit,): {
+        "save": lambda w: w.text,
+        "load": lambda w: lambda s: w.setDate(
+            QDate.fromString(f"{s[6:]}.{s[3:5]}.{s[:2]}", "yyyy.MM.dd")
+        ),
+        "callback": lambda w: w.dateChanged,
     },
 }
 
