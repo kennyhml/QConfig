@@ -9,6 +9,9 @@ from ._method_loader import get_method
 
 @dataclass
 class Hook:
+    """A container for a hook, which provides the ability to invoke calls
+    for the mapped widget such as saving or loading a value or adding a
+    callback"""
 
     name: str
     save: Callable[[], Any]
@@ -17,7 +20,7 @@ class Hook:
 
 
 def build_hook(key: str, widget: QWidget) -> Hook:
-    """Builds a hook to a key in the config to its widget calls.
+    """Builds a hook between a widget and its key in a dataset.
 
     Parameters
     ----------
@@ -41,7 +44,7 @@ def build_hook(key: str, widget: QWidget) -> Hook:
     data = {"choice": "Choice #3", "age": 18, ...}
 
     for k in data.keys():
-        self._build_hook(k, self._get_widget([age_spinbox, choice_combobox], k))
+        self.hooks[k] = build_hook(k, self._get_widget([age_spinbox, choice_combobox], k))
 
     {
         "choice": Hook(name="choice", load="<lambda>", save="<lambda>", ...),

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from PySide6.QtWidgets import QWidget
 
-from .exceptions import InvalidWidgetMappingError
+from .exceptions import WidgetNotFoundError
 
 
 @dataclass
@@ -57,9 +57,8 @@ class QConfigDynamicLoader:
         else:
             self._build_from_list(widget_names)
 
-        if not self.show_build:
-            return
-        print(f"Building successful!\n{json.dumps(self.built_data, indent=4)}")
+        if self.show_build:     
+            print(f"Building successful!\n{json.dumps(self.built_data, indent=4)}")
 
     def _validate_key_presence(self, widgets: list[str]) -> None:
         """Helper method to validate that all values in the data are existing
@@ -76,8 +75,8 @@ class QConfigDynamicLoader:
             if self.complement_keys and self._complement(self.data, k, widgets):
                 continue
 
-            raise InvalidWidgetMappingError(f"No matching widget for '{v}'")
-
+            raise WidgetNotFoundError(k)
+            
         self.built_data = self.data
 
     def _build_from_list(self, widgets: list[str]) -> None:
@@ -97,8 +96,8 @@ class QConfigDynamicLoader:
 
             if k in self.suppress_errors:
                 continue
+            raise WidgetNotFoundError(k)
 
-            raise InvalidWidgetMappingError(f"No matching widget for '{k}'")
         self.built_data = matches
 
     @staticmethod
