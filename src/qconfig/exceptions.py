@@ -1,6 +1,19 @@
 from PySide6.QtWidgets import QWidget
 
 
+class InvalidWidgetMappingError(LookupError):
+    """Raised when a key-to-widget map has an invalid pair"""
+
+
+class HookedWidgetDeletedError(Exception):
+    """Raised when the hook on a deleted widget was requested"""
+
+    def __init__(self, hook: object) -> None:
+        self.hook = hook
+
+    def __str__(self) -> str:
+        return f"Widget deleted for hook '{self.hook}'"
+
 class UnknownWidgetError(LookupError):
     """Raised when the method for a widget could not be found"""
 

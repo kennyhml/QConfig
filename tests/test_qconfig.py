@@ -26,10 +26,7 @@ class TestQConfig(unittest.TestCase):
         self.ui = SampleUi()
         self.widgets = get_all_widgets(self.ui)
 
-    def test_build_without_loader(self) -> None:
-        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
-        qconfig.load_data()
-
+    def _check_ui_matches_data(self) -> None:
         assert self.ui.user_name.text() == self.data["user_name"]
         assert self.ui.nationality.currentText() == self.data["nationality"]
         assert self.ui.employed.isChecked() == self.data["employed"]
@@ -47,8 +44,7 @@ class TestQConfig(unittest.TestCase):
             == self.data["reason_of_application"]
         )
 
-        qconfig.get_data()
-
+    def _check_data_matches_ui(self) -> None:
         assert self.data["user_name"] == self.ui.user_name.text()
         assert self.data["nationality"] == self.ui.nationality.currentText()
         assert self.data["employed"] == self.ui.employed.isChecked()
@@ -64,6 +60,16 @@ class TestQConfig(unittest.TestCase):
             self.data["reason_of_application"]
             == self.ui.reason_of_application.toPlainText()
         )
+
+    def test_build_without_loader(self) -> None:
+        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
+        qconfig.load_data()
+
+        self._check_ui_matches_data()
+
+        qconfig.get_data()
+
+        self._check_data_matches_ui()
 
     def test_build_with_loader(self) -> None:
         self.ui.employed.setObjectName("has_work")
@@ -83,41 +89,15 @@ class TestQConfig(unittest.TestCase):
         )
         qconfig.load_data()
 
-        assert self.ui.user_name.text() == self.data["user_name"]
-        assert self.ui.nationality.currentText() == self.data["nationality"]
-        assert self.ui.employed.isChecked() == self.data["employed"]
-        assert self.ui.date_of_birth.text() == self.data["date_of_birth"]
-        assert self.ui.place_of_birth.text() == self.data["place_of_birth"]
-        assert self.ui.drivers_license.isChecked() == self.data["drivers_license"]
-        assert self.ui.married.isChecked() == self.data["married"]
-        assert self.ui.disabled.isChecked() == self.data["disabled"]
-
-        assert self.ui.school_average.value() == self.data["school_average"]
-        assert self.ui.happiness.value() == self.data["happiness"]
-        assert self.ui.kids.value() == self.data["kids"]
-        assert (
-            self.ui.reason_of_application.toPlainText()
-            == self.data["reason_of_application"]
-        )
+        self._check_ui_matches_data()
 
         qconfig.get_data()
 
-        assert self.data["user_name"] == self.ui.user_name.text()
-        assert self.data["nationality"] == self.ui.nationality.currentText()
-        assert self.data["employed"] == self.ui.employed.isChecked()
-        assert self.data["date_of_birth"] == self.ui.date_of_birth.text()
-        assert self.data["place_of_birth"] == self.ui.place_of_birth.text()
-        assert self.data["drivers_license"] == self.ui.drivers_license.isChecked()
-        assert self.data["married"] == self.ui.married.isChecked()
-        assert self.data["disabled"] == self.ui.disabled.isChecked()
-        assert self.data["school_average"] == self.ui.school_average.value()
-        assert self.data["happiness"] == self.ui.happiness.value()
-        assert self.data["kids"] == self.ui.kids.value()
-        assert (
-            self.data["reason_of_application"]
-            == self.ui.reason_of_application.toPlainText()
-        )
+        self._check_data_matches_ui()
 
+        self.ui.employed.setObjectName("has_work")
+        self.ui.date_of_birth.setObjectName("born_in")
+        self.ui.disabled.setObjectName("has_disability")
 
 if __name__ == "__main__":
     unittest.main()

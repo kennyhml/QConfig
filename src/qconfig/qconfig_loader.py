@@ -1,9 +1,8 @@
-from typing import Callable, Literal, Optional
+from typing import Callable, Optional
 
-from PySide6.QtCore import SignalInstance
 from PySide6.QtWidgets import QWidget
 
-from ._method_loader import get_method
+from ._hook import Hook, build_hook
 from .dynamic_loader import QConfigDynamicLoader
 from .exceptions import WidgetNotFoundError
 
@@ -62,6 +61,9 @@ class QConfig:
     user_data_qconfig = QConfig(user_data, loader, recursive=False)
     ```
     """
+
+    _hooks: dict[str, Hook] = {}
+
     def __init__(
         self,
         name: str,
@@ -73,7 +75,6 @@ class QConfig:
     ) -> None:
         self.name = name
         self.recursive = recursive
-        self._hooks: dict[str, dict[str, Callable | SignalInstance]] = {}
         self._data = data
 
         if loader is None:
@@ -107,15 +108,12 @@ class QConfig:
 
         for k, v in data.items():
             if isinstance(v, dict):
-                self._sync_values(v)
+                self.load_data(v)
                 continue
 
-            method = self._find_method(k, "load")
-            if method.__name__ == "<lambda>":
-                print(f"{method.__name__}({v})")
-                method(v)
-
-            method(v)
+            hook = self._hooks[k]
+            print(hook.load)
+            hook.load(v)
 
     def get_data(self, data: Optional[dict] = None) -> None:
         """Iterates over all items in the date and finds the corresponding widget,
@@ -137,11 +135,11 @@ class QConfig:
 
         for k, v in data.items():
             if isinstance(v, dict):
-                self._sync_values(v)
+                self.get_data(v)
                 continue
 
-            method = self._find_method(k, "save")
-            data[k] = method()
+            hook = self._hooks[k]
+            data[k] = hook.save()
 
     def connect_callback(
         self, callback: Callable, exclude: Optional[list[str]] = None
@@ -156,15 +154,11 @@ class QConfig:
         exclude :class:`list[str]`:
             A list of keys not to add the callback to
         """
-        for hook, methods in self._hooks.items():
-            if exclude is not None and hook in exclude:
+        for k, hook in self._hooks.items():
+            if exclude is not None and k in exclude:
                 continue
 
-            method = methods["callback"]
-            if isinstance(method, SignalInstance):
-                method.connect(callback)
-            else:
-                raise ValueError(f'Expected Signal, got {type(methods["callback"])}')
+            hook.callback.connect(callback)
 
     def disconnect_callback(
         self, callback: Optional[Callable] = None, exclude: Optional[list[str]] = None
@@ -180,62 +174,13 @@ class QConfig:
         exclude :class:`list[str]` [Optional]:
             A list of keys not to add the callback to
         """
-        for hook, methods in self._hooks.items():
-            if exclude is not None and hook in exclude:
+        for k, hook in self._hooks.items():
+            if exclude is not None and k in exclude:
                 continue
-
-            method = methods["callback"]
-            if isinstance(method, SignalInstance):
-                try:
-                    method.disconnect(callback)
-                except RuntimeError:
-                    print(f"Tried disconnecting non connected signal '{callback}'")
-            else:
-                raise ValueError(f'Expected Signal, got {type(methods["callback"])}')
-
-    def _sync_values(self, data: dict) -> None:
-        """Iterates over all items in the date and finds the corresponding widget,
-        then saves the value of the widget to the data.
-
-        Parameters
-        ----------
-        data :class:`dict`:
-            The dictionary to write the data to, NOT a copy
-
-        Raises
-        ------
-        `LookupError`
-            When the widget for a key in the date is missing
-        """
-        for k, v in data.items():
-            if isinstance(v, dict):
-                self._sync_values(v)
-                continue
-
-            method = self._find_method(k, "save")
-            data[k] = method()
-
-    def _find_method(self, key: str, action: Literal["save", "load"]) -> Callable:
-        """Finds the method to either save or load the state of a key
-        in to or from the date.
-
-        Parameters
-        ----------
-        key :class:`str`:
-            The key to find the method of
-
-        action :class:`Literal["save", "load"]`:
-            The action to get the method of
-        """
-        for hook, methods in self._hooks.items():
-            if hook != key:
-                continue
-
-            method = methods[action]
-            if not callable(method):
-                raise TypeError(f"Expected callable, got {type(method)}")
-            return method
-        raise LookupError(f"Failed to find method for {key}")
+            try:
+                hook.callback.disconnect(callback)
+            except RuntimeError:
+                print(f"Tried disconnecting non connected signal '{callback}'")
 
     def _build_widget_hooks(self, data: dict, widgets: list[QWidget]) -> None:
         """Builds the hooks from each key in the data to the widget.
@@ -261,7 +206,7 @@ class QConfig:
 
             if k not in widget_names:
                 return
-            self._build_hook(k, self._get_widget(widgets, k))
+            self._hooks[k] = build_hook(k, self._get_widget(widgets, k))
 
     def _build_widget_hooks_from_loader(
         self, data: dict, widgets: list[QWidget], loader: QConfigDynamicLoader
@@ -315,46 +260,7 @@ class QConfig:
                 if k not in loader.built_data.keys():
                     raise WidgetNotFoundError(k)
                 k = loader.built_data[k]
-            self._build_hook(origin_k, self._get_widget(widgets, k))
-
-    def _build_hook(self, key: str, widget: QWidget) -> None:
-        """Builds a hook to a key in the config to its widget calls.
-
-        Parameters
-        ----------
-        key :class:`key`:
-            The key to build the hook for
-
-        widget :class:`QWidget`:
-            The widget to hook
-
-        Example
-        -------
-        ```py
-        choice_combobox = QComboBox()  # .objectName "choice"
-        age_spinbox = QSpinBox()    # .objectName "age"
-
-        data = {"choice": "Choice #3", "age": 18, ...}
-
-        for k in data.keys():
-            self._build_hook(k, self._get_widget([age_spinbox, choice_combobox], k))
-
-        {
-            "choice": {"save": lambda w: w.currentText, "load": lambda w: w.setCurrentText, ...},
-            "age": {"save": lambda w: w.value, "load": lambda w: w.setValue, ...},
-        }
-        """
-        hook = {
-            action: method(widget)
-            for action, method in [
-                (
-                    a,
-                    get_method(widget, a),  # type:ignore[arg-type]
-                )
-                for a in ["save", "load", "callback"]
-            ]
-        }
-        self._hooks[key] = hook
+            self._hooks[k] = build_hook(origin_k, self._get_widget(widgets, k))
 
     @staticmethod
     def _get_widget(widgets: list[QWidget], key: str) -> QWidget:

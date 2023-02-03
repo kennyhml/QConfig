@@ -1,24 +1,11 @@
 from typing import Any, Callable, Literal, Type
 
 from PySide6.QtCore import QDate
-from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QDateEdit,
-    QDoubleSpinBox,
-    QFontComboBox,
-    QLineEdit,
-    QPlainTextEdit,
-    QProgressBar,
-    QPushButton,
-    QSlider,
-    QSpinBox,
-    QStackedWidget,
-    QTabWidget,
-    QTextBrowser,
-    QTextEdit,
-    QWidget,
-)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QDateEdit, QDoubleSpinBox,
+                               QFontComboBox, QLineEdit, QPlainTextEdit,
+                               QProgressBar, QPushButton, QSlider, QSpinBox,
+                               QStackedWidget, QTabWidget, QTextBrowser,
+                               QTextEdit, QWidget)
 
 from .exceptions import UnknownWidgetError
 
