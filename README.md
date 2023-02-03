@@ -18,7 +18,7 @@ For datasets with keys that do not match the widget names, a `QConfigDynamicLoad
 - Convert `str` from config into `QDate` objects
 
 ## Why should you use it?
-Preserving the state of a GUI in files such as json, yaml or xml yourself can be tedious and results in a lot of boilerplate code, each widget needs to be connected to the data that holds its value and vice versa, you need to add callbacks to all widgets to invoke a save (unless you want to use a save button or timer) and it takes alot of time, increases the amount of code and increases the risk of getting something wrong. QConfig uses a more sophisticated method of handling the configs for you and allows you to focus on your GUI design rather than worrying about preserving its state.
+Preserving the state of a GUI in files such as json, yaml or xml yourself can be tedious and results in a lot of boilerplate code. Each widget needs to be connected to the data that holds its value and vice versa, you need to add callbacks to all widgets to invoke a save (unless you want to use a save button or timer) and it takes alot of time, increases the amount of code and increases the risk of getting something wrong. QConfig uses a more sophisticated method of handling the configs for you and allows you to focus on your GUI design rather than worrying about preserving its state.
 
 # Usage
 QConfig is very lightweight and intuitive to use, more-so when the configs keys already match the widget names.
