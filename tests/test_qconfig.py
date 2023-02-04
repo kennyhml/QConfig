@@ -99,5 +99,41 @@ class TestQConfig(unittest.TestCase):
         self.ui.date_of_birth.setObjectName("born_in")
         self.ui.disabled.setObjectName("has_disability")
 
+    def test_values_match(self) -> None:
+        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
+        qconfig.load_data()
+
+        assert qconfig.values_match()
+
+    def test_values_dont_match(self) -> None:
+        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
+        qconfig.load_data()
+
+        self.ui.employed.setChecked(True)
+
+        assert not qconfig.values_match()
+
+        self.ui.employed.setChecked(False)
+
+    def test_value_get(self) -> None:
+        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
+        qconfig.load_data()
+
+        self.ui.drivers_license.setChecked(True)
+
+        assert qconfig.get_widget_value("drivers_license") != self.data["drivers_license"]
+
+    def test_widget_value_get(self) -> None:
+        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
+        qconfig.load_data()
+
+        self.ui.user_name.setText("Jeffrey") 
+
+        assert qconfig.get_widget_value("user_name") != self.data["user_name"]
+
+
+
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -14,8 +14,8 @@ class Hook:
     callback"""
 
     name: str
-    save: Callable[[], Any]
-    load: Callable[[Any], None]
+    get: Callable[[], Any]
+    set: Callable[[Any], None]
     callback: SignalInstance
 
 

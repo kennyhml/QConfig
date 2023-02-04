@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from PySide6.QtWidgets import QWidget
 
@@ -112,8 +112,7 @@ class QConfig:
                 continue
 
             hook = self._hooks[k]
-            print(hook.load)
-            hook.load(v)
+            hook.set(v)
 
     def get_data(self, data: Optional[dict] = None) -> None:
         """Iterates over all items in the date and finds the corresponding widget,
@@ -139,7 +138,7 @@ class QConfig:
                 continue
 
             hook = self._hooks[k]
-            data[k] = hook.save()
+            data[k] = hook.get()
 
     def connect_callback(
         self, callback: Callable, exclude: Optional[list[str]] = None
@@ -181,6 +180,17 @@ class QConfig:
                 hook.callback.disconnect(callback)
             except RuntimeError:
                 print(f"Tried disconnecting non connected signal '{callback}'")
+
+    def values_match(self) -> bool:
+        return all(hook.get() == self._data[k] for k, hook in self._hooks.items())
+
+    def get_widget_value(self, widget_name: str) -> Any:
+        for hook in self._hooks.values():
+            if hook.name == widget_name:
+                return hook.get()
+
+    def get_data_value(self, key: str) -> Any:
+        return self._data[key]
 
     def _build_widget_hooks(self, data: dict, widgets: list[QWidget]) -> None:
         """Builds the hooks from each key in the data to the widget.
@@ -260,7 +270,7 @@ class QConfig:
                 if k not in loader.built_data.keys():
                     raise WidgetNotFoundError(k)
                 k = loader.built_data[k]
-            self._hooks[k] = build_hook(origin_k, self._get_widget(widgets, k))
+            self._hooks[origin_k] = build_hook(k, self._get_widget(widgets, k))
 
     @staticmethod
     def _get_widget(widgets: list[QWidget], key: str) -> QWidget:
