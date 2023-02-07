@@ -76,6 +76,7 @@ class QConfig:
         self.name = name
         self.recursive = recursive
         self._data = data
+        self._save_on_change = False
 
         if loader is None:
             self._build_widget_hooks(data, widgets)
@@ -83,10 +84,32 @@ class QConfig:
             self._build_widget_hooks_from_loader(data, widgets, loader)
 
     def __str__(self) -> str:
-        return f"QConfig '{self.name}', responsible for keys {list(self._data.keys())}"
+        return f"QConfig '{self.name}', responsible for {list(self._data.keys())}"
 
     def __repr__(self) -> str:
         return f"QConfig(name='{self.name}', data={self._data}, hooks={self._hooks}, recursive={self.recursive})"
+
+    @property
+    def hooks(self) -> str:
+        return "".join(
+            f"{k}: {repr(h.get.__name__)}, {repr(h.set.__name__)}, {repr(h.callback.__class__)}\n"
+            for k, h in self._hooks.items()
+        )
+
+    @property
+    def save_on_change(self) -> bool:
+        return self._save_on_change
+
+    @save_on_change.setter
+    def save_on_change(self, state: bool) -> None:
+        if not state:
+            if self._save_on_change:
+                self.disconnect_callback(self.get_data)
+            self._save_on_change = False
+        elif state:
+            if not self.save_on_change:
+                self.connect_callback(self.get_data)
+            self._save_on_change = True
 
     def load_data(self, data: Optional[dict] = None) -> None:
         """Iterates over all items in the date and finds the corresponding widget,
@@ -157,7 +180,7 @@ class QConfig:
             if exclude is not None and k in exclude:
                 continue
 
-            hook.callback.connect(callback)
+            hook.callback.connect(lambda: callback())
 
     def disconnect_callback(
         self, callback: Optional[Callable] = None, exclude: Optional[list[str]] = None

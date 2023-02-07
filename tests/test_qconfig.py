@@ -1,4 +1,4 @@
-import unittest
+import unittest  # type:ignore[import]
 
 from qconfig import QConfig, QConfigDynamicLoader
 from qconfig.tools import get_all_widgets
