@@ -1,0 +1,14 @@
+{
+    "user_name": "Kenny",
+    "nationality": "German",
+    "employed": false,
+    "date_of_birth": "03.01.2004",
+    "place_of_birth": "Germany",
+    "married": false,
+    "drivers_license": false,
+    "disabled": false,
+    "kids": 0,
+    "happiness": 10,
+    "school_average": 2.3,
+    "reason_of_application": "Fun"
+}

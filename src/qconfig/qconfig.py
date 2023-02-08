@@ -5,13 +5,14 @@ import os
 import xml.etree.ElementTree as ET
 from typing import Any, Callable, Optional
 
-import yaml  # type:ignore[import]
+import yaml  # type: ignore[import]
 from PySide6.QtWidgets import QWidget
 
 from ._hook import Hook, build_hook
 from ._xml_tools import dict_to_etree, etree_to_dict, write_to_xml_file
 from .dynamic_loader import QConfigDynamicLoader
-from .exceptions import HookNotFoundError, WidgetAlreadydHookedError, WidgetNotFoundError
+from .exceptions import (HookNotFoundError, WidgetAlreadydHookedError,
+                         WidgetNotFoundError)
 
 
 class QConfig:
@@ -102,18 +103,15 @@ class QConfig:
         else:
             self._build_widget_hooks_from_loader(self.data, widgets, loader)
 
-    def __del__(self) -> None:
-        """Make sure we 'unhook' the widget when the QConfig gets garbage
-        deleted."""
-        self._hooked_widgets.pop(self._name, None)
-
     def __str__(self) -> str:
         return f"QConfig '{self._name}', responsible for {list(self.data.keys())}"
 
     def __repr__(self) -> str:
-        return (
-            f"QConfig(name={self._name}, data={self.data}, filepath={self.filepath})"
-        )
+        return f"QConfig(name={self._name}, data={self.data}, filepath={self.filepath})"
+
+    def __del__(self) -> None:
+        """Make sure we 'unhook' the widget when the QConfig gets garbage collected."""
+        self._hooked_widgets.pop(self._name, None)
 
     @property
     def name(self) -> str:
@@ -407,7 +405,7 @@ class QConfig:
                 self._build_widget_hooks_from_loader(v, widgets, loader)
                 continue
 
-            # check if k matches, else if k is in the dynamic loader,
+            # check if k matches or if k is in the dynamic loader
             # if k is in neither of them then we are missing a widget
             origin_k = k
             if k not in widget_names:

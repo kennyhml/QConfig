@@ -1,6 +1,7 @@
 import unittest  # type:ignore[import]
 
 from qconfig import QConfig, QConfigDynamicLoader
+from qconfig.exceptions import WidgetAlreadydHookedError
 from qconfig.tools import get_all_widgets
 
 from .sampel_ui import SampleUi
@@ -62,9 +63,7 @@ class TestQConfig(unittest.TestCase):
         )
 
     def test_build_without_loader(self) -> None:
-        qconfig = QConfig(
-            "Test without loader", self.widgets, self.data, recursive=False
-        )
+        qconfig = QConfig("Test without loader", self.widgets, self.data)
         qconfig.set_data()
         self._check_ui_matches_data()
         qconfig.get_data()
@@ -83,9 +82,7 @@ class TestQConfig(unittest.TestCase):
             }
         )
 
-        qconfig = QConfig(
-            "test with loader", self.widgets, self.data, loader=loader, recursive=False
-        )
+        qconfig = QConfig("test with loader", self.widgets, self.data, loader=loader)
         qconfig.set_data()
 
         self._check_ui_matches_data()
@@ -98,18 +95,23 @@ class TestQConfig(unittest.TestCase):
         self.ui.date_of_birth.setObjectName("born_in")
         self.ui.disabled.setObjectName("has_disability")
 
+    def test_load_from_file(self) -> None:
+        qconfig = QConfig("test from file", self.widgets, filepath="tests/sample_data.json")
+
+        assert qconfig.data == self.data
+        
+        qconfig = QConfig("test from file", self.widgets, filepath="tests/sample_data.yaml")
+
+        assert qconfig.data == self.data
+
     def test_values_match(self) -> None:
-        qconfig = QConfig(
-            "test values matching", self.widgets, self.data, recursive=False
-        )
+        qconfig = QConfig("test values matching", self.widgets, self.data)
         qconfig.set_data()
 
         assert qconfig.values_match()
 
     def test_values_dont_match(self) -> None:
-        qconfig = QConfig(
-            "test values not matching", self.widgets, self.data, recursive=False
-        )
+        qconfig = QConfig("test values not matching", self.widgets, self.data)
         qconfig.set_data()
 
         self.ui.employed.setChecked(True)
@@ -119,7 +121,7 @@ class TestQConfig(unittest.TestCase):
         self.ui.employed.setChecked(False)
 
     def test_value_get(self) -> None:
-        qconfig = QConfig("test values get", self.widgets, self.data, recursive=False)
+        qconfig = QConfig("test values get", self.widgets, self.data)
         qconfig.set_data()
 
         self.ui.drivers_license.setChecked(True)
@@ -129,13 +131,22 @@ class TestQConfig(unittest.TestCase):
         )
 
     def test_widget_value_get(self) -> None:
-        qconfig = QConfig("test widgets get", self.widgets, self.data, recursive=False)
+        qconfig = QConfig("test widgets get", self.widgets, self.data)
         qconfig.set_data()
 
         self.ui.user_name.setText("Jeffrey")
 
         assert qconfig.get_widget_value("user_name") != self.data["user_name"]
 
+    def test_multihooking_preventions(self) -> None:
+        c1 = QConfig("multihooking 1", self.widgets, self.data)
+
+        with self.assertRaises(WidgetAlreadydHookedError):
+            c2 = QConfig("multihooking 2", self.widgets, self.data)
+
+        c3 = QConfig(
+            "multihooking 3", self.widgets, self.data, allow_multiple_hooks=True
+        )
 
 if __name__ == "__main__":
     unittest.main()

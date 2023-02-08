@@ -8,7 +8,7 @@ version = "0.0.1"
 authors = [
   { name="Kenny Hommel", email="kennyhommel36@gmail.com" },
 ]
-description = "A helper package to store and load PyQt6 GUI configurations"
+description = "A helper package to store and load PyQt GUI configurations"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
