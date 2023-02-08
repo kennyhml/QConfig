@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QWidget
 from ._hook import Hook, build_hook
 from ._xml_tools import dict_to_etree, etree_to_dict, write_to_xml_file
 from .dynamic_loader import QConfigDynamicLoader
-from .exceptions import WidgetAlreadydHookedError, WidgetNotFoundError
+from .exceptions import HookNotFoundError, WidgetAlreadydHookedError, WidgetNotFoundError
 
 
 class QConfig:
@@ -94,30 +94,37 @@ class QConfig:
             raise ValueError("Either `data` or `filepath` must be provided.")
 
         if data is not None:
-            self._data = data
+            self.data = data
         else:
             self.read()
         if loader is None:
-            self._build_widget_hooks(self._data, widgets)
+            self._build_widget_hooks(self.data, widgets)
         else:
-            self._build_widget_hooks_from_loader(self._data, widgets, loader)
+            self._build_widget_hooks_from_loader(self.data, widgets, loader)
 
     def __del__(self) -> None:
-        if self._name in self._hooked_widgets.keys():
-            self._hooked_widgets.pop(self._name)
+        """Make sure we 'unhook' the widget when the QConfig gets garbage
+        deleted."""
+        self._hooked_widgets.pop(self._name, None)
 
     def __str__(self) -> str:
-        return f"QConfig '{self._name}', responsible for {list(self._data.keys())}"
+        return f"QConfig '{self._name}', responsible for {list(self.data.keys())}"
 
     def __repr__(self) -> str:
-        return "\n".join(
-            f"{k}: {h.get.__name__}, {h.set.__name__}, {h.callback.__class__}"
-            for k, h in self._hooks.items()
+        return (
+            f"QConfig(name={self._name}, data={self.data}, filepath={self.filepath})"
         )
 
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def hooks(self) -> str:
+        return "\n".join(
+            f"{k}: get: {h.get.__name__}; set: {h.set.__name__}; callback: {h.callback.__class__}"
+            for k, h in self._hooks.items()
+        )
 
     @property
     def save_on_change(self) -> bool:
@@ -127,10 +134,12 @@ class QConfig:
     def save_on_change(self, state: bool) -> None:
         if not state:
             if self._save_on_change:
+                # callbacks connected previously -> disconnect callbacks
                 self.disconnect_callback(self.get_data)
             self._save_on_change = False
         else:
             if not self.save_on_change:
+                # not connected prior to call -> connect callbacks
                 self.connect_callback(self.get_data)
             self._save_on_change = True
 
@@ -211,7 +220,7 @@ class QConfig:
             When the widget for a key in the date is missing
         """
         if data is None:
-            data = self._data
+            data = self.data
 
         for k, v in data.items():
             if isinstance(v, dict):
@@ -237,7 +246,7 @@ class QConfig:
             When the widget for a key in the date is missing
         """
         if data is None:
-            data = self._data
+            data = self.data
 
         for k, v in data.items():
             if isinstance(v, dict):
@@ -289,15 +298,17 @@ class QConfig:
                 print(f"Tried disconnecting non connected signal '{callback}'")
 
     def values_match(self) -> bool:
-        return all(hook.get() == self._data[k] for k, hook in self._hooks.items())
+        """Returns whether all values in the widgets match their value in
+        the hooked dataset."""
+        return all(hook.get() == self.data[k] for k, hook in self._hooks.items())
 
     def get_widget_value(self, widget_name: str) -> Any:
+        """Gets the value of a hooked widget by name. Raises `HookNotFoundError`
+        if no `Hook` is bound to the widget."""
         for hook in self._hooks.values():
             if hook.name == widget_name:
                 return hook.get()
-
-    def get_data_value(self, key: str) -> Any:
-        return self._data[key]
+        raise HookNotFoundError(widget_name)
 
     def _check_widget_not_hooked(self, widget_name: str) -> None:
         """Checks whether a widget is already hooked in another QConfig.

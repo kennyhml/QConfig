@@ -31,6 +31,14 @@ class WidgetAlreadydHookedError(HookError):
     def __str__(self) -> str:
         return f"Widget '{self.widget}' already hooked in '{self.hooked_in}'"
 
+class HookNotFoundError(HookError):
+    """Raised when the hook for a widget could not be found"""
+    def __init__(self, widget: object) -> None:
+        self.widget = widget
+
+    def __str__(self) -> str:
+        return f"No hook found for '{self.widget}'"
+
 
 class WidgetError(Exception):
     """Parent exceptions for all errors related to widgets"""
