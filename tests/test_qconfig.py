@@ -62,13 +62,12 @@ class TestQConfig(unittest.TestCase):
         )
 
     def test_build_without_loader(self) -> None:
-        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
-        qconfig.load_data()
-
+        qconfig = QConfig(
+            "Test without loader", self.widgets, self.data, recursive=False
+        )
+        qconfig.set_data()
         self._check_ui_matches_data()
-
         qconfig.get_data()
-
         self._check_data_matches_ui()
 
     def test_build_with_loader(self) -> None:
@@ -85,9 +84,9 @@ class TestQConfig(unittest.TestCase):
         )
 
         qconfig = QConfig(
-            "TestConfig", self.data, self.widgets, loader, recursive=False
+            "test with loader", self.widgets, self.data, loader=loader, recursive=False
         )
-        qconfig.load_data()
+        qconfig.set_data()
 
         self._check_ui_matches_data()
 
@@ -100,14 +99,18 @@ class TestQConfig(unittest.TestCase):
         self.ui.disabled.setObjectName("has_disability")
 
     def test_values_match(self) -> None:
-        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
-        qconfig.load_data()
+        qconfig = QConfig(
+            "test values matching", self.widgets, self.data, recursive=False
+        )
+        qconfig.set_data()
 
         assert qconfig.values_match()
 
     def test_values_dont_match(self) -> None:
-        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
-        qconfig.load_data()
+        qconfig = QConfig(
+            "test values not matching", self.widgets, self.data, recursive=False
+        )
+        qconfig.set_data()
 
         self.ui.employed.setChecked(True)
 
@@ -116,23 +119,22 @@ class TestQConfig(unittest.TestCase):
         self.ui.employed.setChecked(False)
 
     def test_value_get(self) -> None:
-        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
-        qconfig.load_data()
+        qconfig = QConfig("test values get", self.widgets, self.data, recursive=False)
+        qconfig.set_data()
 
         self.ui.drivers_license.setChecked(True)
 
-        assert qconfig.get_widget_value("drivers_license") != self.data["drivers_license"]
+        assert (
+            qconfig.get_widget_value("drivers_license") != self.data["drivers_license"]
+        )
 
     def test_widget_value_get(self) -> None:
-        qconfig = QConfig("TestConfig", self.data, self.widgets, recursive=False)
-        qconfig.load_data()
+        qconfig = QConfig("test widgets get", self.widgets, self.data, recursive=False)
+        qconfig.set_data()
 
-        self.ui.user_name.setText("Jeffrey") 
+        self.ui.user_name.setText("Jeffrey")
 
         assert qconfig.get_widget_value("user_name") != self.data["user_name"]
-
-
-
 
 
 if __name__ == "__main__":

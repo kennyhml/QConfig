@@ -1,4 +1,5 @@
 from typing import Any
+
 from PySide6.QtWidgets import QWidget
 
 
@@ -24,12 +25,11 @@ class WidgetAlreadydHookedError(HookError):
     """Raised when attempting to hook a widget that is already hooked,
     unless it was explicitly allowed to hook widgets twice"""
 
-    def __init__(self, hook: object) -> None:
-        self.hook = hook
-
+    def __init__(self, widget: object, hooked_in: str) -> None:
+        self.widget = widget
+        self.hooked_in = hooked_in
     def __str__(self) -> str:
-        return f"Widget deleted for hook '{self.hook}'"
-
+        return f"Widget '{self.widget}' already hooked in '{self.hooked_in}'"
 
 
 class WidgetError(Exception):
