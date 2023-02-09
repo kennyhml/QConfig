@@ -51,14 +51,16 @@ class QConfigDynamicLoader:
             When the widget to a key could not be found
         """
         widget_names = [w.objectName() for w in widgets]
-
         if isinstance(self.data, dict):
+            self._print_build("Building dynamic loader from dict...")
             self._validate_key_presence(widget_names)
         else:
+            self._print_build("Building dynamic loader from list...")
             self._build_from_list(widget_names)
 
-        if self.show_build:     
-            print(f"Building successful!\n{json.dumps(self.built_data, indent=4)}")
+        self._print_build(
+            f"Building successful!\n{json.dumps(self.built_data, indent=4)}"
+        )
 
     def _validate_key_presence(self, widgets: list[str]) -> None:
         """Helper method to validate that all values in the data are existing
@@ -69,14 +71,15 @@ class QConfigDynamicLoader:
 
         for k, v in self.data.items():
             if k in self.suppress_errors or v in widgets:
+                self._print_build(f"'{k}' is valid.")
                 continue
 
             # try to add the missing key
             if self.complement_keys and self._complement(self.data, k, widgets):
+                self._print_build(f"Complemented '{k}'.")
                 continue
-
             raise WidgetNotFoundError(k)
-            
+
         self.built_data = self.data
 
     def _build_from_list(self, widgets: list[str]) -> None:
@@ -87,14 +90,18 @@ class QConfigDynamicLoader:
             raise ValueError(f"Invalid data type. Expected list, got {type(self.data)}")
 
         matches = {k: k for k in self.data if k in widgets}
+        self._print_build(f"Perfect matches: {matches}. Complementing remainders...")
+
         remaining_keys = [k for k in self.data if k not in matches.keys()]
         remaining_widgets = [k for k in widgets if k not in matches.keys()]
 
         for k in remaining_keys:
             if self.complement_keys and self._complement(matches, k, remaining_widgets):
+                self._print_build(f"Complemented '{k}'.")
                 continue
 
             if k in self.suppress_errors:
+                self._print_build(f"Suppressed error for '{k}'!")
                 continue
             raise WidgetNotFoundError(k)
 
@@ -125,3 +132,10 @@ class QConfigDynamicLoader:
         if matches:
             data[key] = matches[0]
         return bool(matches)
+
+    def _print_build(self, message: str) -> None:
+        """Print wrapper to print only when the `show_build` flag is `True`.
+        Prints the given message to the console.
+        """
+        if self.show_build:
+            print(message)
