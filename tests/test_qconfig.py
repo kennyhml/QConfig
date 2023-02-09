@@ -1,3 +1,5 @@
+import json
+from time import sleep
 import unittest  # type:ignore[import]
 
 from qconfig import QConfig, QConfigDynamicLoader
@@ -147,6 +149,34 @@ class TestQConfig(unittest.TestCase):
         c3 = QConfig(
             "multihooking 3", self.widgets, self.data, allow_multiple_hooks=True
         )
+
+    def test_save_on_change(self) -> None:
+        c1 = QConfig("dump on save", self.widgets, filepath="tests/sample_data.json")
+
+        c1.save_on_change = True
+
+        self.ui.drivers_license.setChecked(True)
+
+        assert c1.data["drivers_license"]
+
+        self.ui.drivers_license.setChecked(False)
+
+    def test_dump_on_save(self) -> None:
+        c1 = QConfig("dump on save", self.widgets, filepath="tests/sample_data.json")
+
+        c1.save_on_change = True
+        c1.dump_on_save = True
+
+        self.ui.drivers_license.setChecked(True)
+
+        with open("tests/sample_data.json", "r") as f:
+            data = json.load(f)
+
+        assert data["drivers_license"]
+
+        self.ui.drivers_license.setChecked(False)
+        with open("tests/sample_data.json", "w") as f:
+            json.dump(self.data, f, indent=4)
 
 if __name__ == "__main__":
     unittest.main()

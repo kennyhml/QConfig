@@ -11,8 +11,11 @@ from PySide6.QtWidgets import QWidget
 from ._hook import Hook, build_hook
 from ._xml_tools import dict_to_etree, etree_to_dict, write_to_xml_file
 from .dynamic_loader import QConfigDynamicLoader
-from .exceptions import (HookNotFoundError, WidgetAlreadydHookedError,
-                         WidgetNotFoundError)
+from .exceptions import (
+    HookNotFoundError,
+    WidgetAlreadydHookedError,
+    WidgetNotFoundError,
+)
 
 
 class QConfig:
@@ -88,7 +91,10 @@ class QConfig:
         self._recursive = recursive
         self.filepath = filepath
         self.allow_mutliple_hooks = allow_multiple_hooks
+
         self._save_on_change = False
+        self._dump_on_save = False
+        self._ignore_changes = False
         self._hooks: dict[str, Hook] = {}
 
         if data is None and filepath is None:
@@ -98,6 +104,7 @@ class QConfig:
             self.data = data
         else:
             self.read()
+
         if loader is None:
             self._build_widget_hooks(self.data, widgets)
         else:
@@ -130,16 +137,23 @@ class QConfig:
 
     @save_on_change.setter
     def save_on_change(self, state: bool) -> None:
-        if not state:
-            if self._save_on_change:
-                # callbacks connected previously -> disconnect callbacks
-                self.disconnect_callback(self.get_data)
-            self._save_on_change = False
+        if state == self._save_on_change:
+            return
+        if state:
+            self.connect_callback(self.get_data)
         else:
-            if not self.save_on_change:
-                # not connected prior to call -> connect callbacks
-                self.connect_callback(self.get_data)
-            self._save_on_change = True
+            self.disconnect_callback(self.get_data)
+        self._save_on_change = state
+
+    @property
+    def dump_on_save(self) -> bool:
+        return self._dump_on_save
+
+    @dump_on_save.setter
+    def dump_on_save(self, state: bool) -> None:
+        if not self.filepath:
+            raise ValueError("Can't dump on save without provided filepath!")
+        self._dump_on_save = state
 
     def read(self) -> None:
         """Reads the data provided as the `filepath`.
@@ -209,7 +223,7 @@ class QConfig:
         Parameters
         ----------
         data :class:`dict`:
-            The dictionary to read the data from, NOT a copy, if none is
+            The dictionary to read the data from, NOT a copy, if None is
             passed it will load the instance data, allows for recursion
 
         Raises
@@ -218,7 +232,10 @@ class QConfig:
             When the widget for a key in the date is missing
         """
         if data is None:
+            if self._ignore_changes:
+                return
             data = self.data
+            self._ignore_changes = True
 
         for k, v in data.items():
             if isinstance(v, dict):
@@ -227,6 +244,9 @@ class QConfig:
 
             hook = self._hooks[k]
             hook.set(v)
+
+        if data is None:
+            self._ignore_changes = False
 
     def get_data(self, data: Optional[dict] = None) -> None:
         """Iterates over all items in the date and finds the corresponding widget,
@@ -243,6 +263,7 @@ class QConfig:
         `LookupError`
             When the widget for a key in the date is missing
         """
+        master_call = data is None
         if data is None:
             data = self.data
 
@@ -253,6 +274,9 @@ class QConfig:
 
             hook = self._hooks[k]
             data[k] = hook.get()
+
+        if master_call and self._dump_on_save:
+            self.write()
 
     def connect_callback(
         self, callback: Callable, exclude: Optional[list[str]] = None
