@@ -11,11 +11,8 @@ from PySide6.QtWidgets import QWidget
 from ._hook import Hook, build_hook
 from ._xml_tools import dict_to_etree, etree_to_dict, write_to_xml_file
 from .dynamic_loader import QConfigDynamicLoader
-from .exceptions import (
-    HookNotFoundError,
-    WidgetAlreadydHookedError,
-    WidgetNotFoundError,
-)
+from .exceptions import (HookNotFoundError, WidgetAlreadydHookedError,
+                         WidgetNotFoundError)
 
 
 class QConfig:
@@ -48,6 +45,15 @@ class QConfig:
 
     recursive :class:`bool`:
         Whether to search the dict recursively for sub-dicts to link widgets to
+
+    save_on_change :class:`bool`:
+        Whether to callback to the `get_data` method when any of the widgets change state
+
+    dump_on_save :class:`bool`:
+        Whether to write to the file after `get_data` is called. Filepath required.
+
+    dump_on_save :class:`bool`:
+        Whether to print building information to the console
 
     Raises
     ------
@@ -86,14 +92,18 @@ class QConfig:
         *,
         recursive: bool = True,
         allow_multiple_hooks: bool = False,
+        save_on_change: bool = False,
+        dump_on_save: bool = False,
+        show_build: bool = False,
     ) -> None:
         self._name = name
         self._recursive = recursive
+        self._save_on_change = save_on_change
+        self._dump_on_save = dump_on_save
+        self._show_build = show_build
+
         self.filepath = filepath
         self.allow_mutliple_hooks = allow_multiple_hooks
-
-        self._save_on_change = False
-        self._dump_on_save = False
         self._ignore_changes = False
         self._hooks: dict[str, Hook] = {}
 
@@ -101,13 +111,17 @@ class QConfig:
             raise ValueError("Either `data` or `filepath` must be provided.")
 
         if data is not None:
+            self._print_build(f"Constructing '{name}' from data...")
             self.data = data
         else:
+            self._print_build(f"Constructing '{name}' from file...")
             self.read()
 
         if loader is None:
+            self._print_build(f"Building hooks for '{name}' without dynamic loader...")
             self._build_widget_hooks(self.data, widgets)
         else:
+            self._print_build(f"Building hooks for '{name}' with dynamic loader...")
             self._build_widget_hooks_from_loader(self.data, widgets, loader)
 
     def __str__(self) -> str:
@@ -348,6 +362,7 @@ class QConfig:
         for name, widgets in self._hooked_widgets.items():
             if widget_name in widgets:
                 raise WidgetAlreadydHookedError(widget_name, name)
+        self._print_build(f"Widget '{widget_name}' is not hooked...")
 
     def _build_widget_hooks(self, data: dict, widgets: list[QWidget]) -> None:
         """Builds the hooks from each key in the data to the widget.
@@ -368,17 +383,21 @@ class QConfig:
         self._hooked_widgets[self._name] = []
         widget_names = [w.objectName() for w in widgets]
         for k, v in data.items():
+            if k not in widget_names:
+                raise WidgetNotFoundError(k)
+
             if not self.allow_mutliple_hooks:
                 self._check_widget_not_hooked(k)
 
             if self._recursive and isinstance(v, dict):
+                self._print_build(f"Found subdict '{k}', hooking recursively...")
                 self._build_widget_hooks(v, widgets)
                 continue
 
-            if k not in widget_names:
-                return
+            self._print_build(f"Building hook for '{k}'...")
             self._hooks[k] = build_hook(k, self._get_widget(widgets, k))
             self._hooked_widgets[self._name].append(k)
+            self._print_build(f"Successfully hooked '{k}'! {self._hooks[k]}")
 
     def _build_widget_hooks_from_loader(
         self, data: dict, widgets: list[QWidget], loader: QConfigDynamicLoader
@@ -417,6 +436,7 @@ class QConfig:
         loader.build_data = {"choice": "choice_widget", ...}
         """
         # build the loader with the widgets
+        self._print_build(f"Building dynamic loader...")
         loader.build(widgets)
         self._hooked_widgets[self._name] = []
         widget_names = [w.objectName() for w in widgets]
@@ -426,6 +446,7 @@ class QConfig:
                 self._check_widget_not_hooked(k)
 
             if self._recursive and isinstance(v, dict):
+                self._print_build(f"Found subdict '{k}', hooking recursively...")
                 self._build_widget_hooks_from_loader(v, widgets, loader)
                 continue
 
@@ -436,8 +457,10 @@ class QConfig:
                 if k not in loader.built_data.keys():
                     raise WidgetNotFoundError(k)
                 k = loader.built_data[k]
+            self._print_build(f"Building hook for '{k}'...")
             self._hooks[origin_k] = build_hook(k, self._get_widget(widgets, k))
             self._hooked_widgets[self._name].append(k)
+            self._print_build(f"Successfully hooked '{k}'! {self._hooks[origin_k]}")
 
     @staticmethod
     def _get_widget(widgets: list[QWidget], key: str) -> QWidget:
@@ -465,3 +488,10 @@ class QConfig:
             if w.objectName() == key:
                 return w
         raise WidgetNotFoundError(key)
+
+    def _print_build(self, message: str) -> None:
+        """Print wrapper to print only when the `show_build` flag is `True`.
+        Prints the given message to the console.
+        """
+        if self._show_build:
+            print(message)

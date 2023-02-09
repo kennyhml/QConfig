@@ -151,7 +151,7 @@ class TestQConfig(unittest.TestCase):
         )
 
     def test_save_on_change(self) -> None:
-        c1 = QConfig("dump on save", self.widgets, filepath="tests/sample_data.json")
+        c1 = QConfig("save on change", self.widgets, filepath="tests/sample_data.json")
 
         c1.save_on_change = True
 
@@ -173,10 +173,19 @@ class TestQConfig(unittest.TestCase):
             data = json.load(f)
 
         assert data["drivers_license"]
-
         self.ui.drivers_license.setChecked(False)
+
         with open("tests/sample_data.json", "w") as f:
             json.dump(self.data, f, indent=4)
+
+    def test_invalid_actions(self) -> None:
+        with self.assertRaises(ValueError):
+            QConfig("no data or file", self.widgets)
+
+        conf = QConfig("multihooking 1", self.widgets, self.data)
+        with self.assertRaises(ValueError):
+            conf.dump_on_save = True
+
 
 if __name__ == "__main__":
     unittest.main()

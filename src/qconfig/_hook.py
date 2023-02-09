@@ -18,6 +18,8 @@ class Hook:
     set: Callable[[Any], None]
     callback: SignalInstance
 
+    def __str__(self) -> str:
+        return f"Hook(name={self.name}, get={self.get.__qualname__}, set={self.set.__qualname__})"
 
 def build_hook(key: str, widget: QWidget) -> Hook:
     """Builds a hook between a widget and its key in a dataset.
