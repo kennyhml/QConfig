@@ -8,7 +8,6 @@ _SUPPORTED_WIDGETS = [
     QComboBox,
     QFontComboBox,
     QCheckBox,
-    QPushButton,
     QSpinBox,
     QDoubleSpinBox,
     QSlider,

@@ -15,7 +15,7 @@ OBJECT_METHOD_MAP: dict[tuple[Type[QWidget], ...], dict[str, Callable[[Any], Any
         "load": lambda w: w.setCurrentText,
         "callback": lambda w: w.currentIndexChanged,
     },
-    (QCheckBox, QPushButton): {
+    (QCheckBox,): {
         "save": lambda w: w.isChecked,
         "load": lambda w: w.setChecked,
         "callback": lambda w: w.stateChanged,

@@ -124,6 +124,10 @@ class QConfig:
             self._print_build(f"Building hooks for '{name}' with dynamic loader...")
             self._build_widget_hooks_from_loader(self.data, widgets, loader)
 
+        if save_on_change:
+            self.connect_callback(self.get_data)
+
+
     def __str__(self) -> str:
         return f"QConfig '{self._name}', responsible for {list(self.data.keys())}"
 
@@ -245,12 +249,13 @@ class QConfig:
         `LookupError`
             When the widget for a key in the date is missing
         """
-        if data is None:
-            if self._ignore_changes:
-                return
+        master = data is None
+
+        if master:
             data = self.data
             self._ignore_changes = True
-
+        assert data is not None
+        
         for k, v in data.items():
             if isinstance(v, dict):
                 self.set_data(v)
@@ -259,7 +264,7 @@ class QConfig:
             hook = self._hooks[k]
             hook.set(v)
 
-        if data is None:
+        if master:
             self._ignore_changes = False
 
     def get_data(self, data: Optional[dict] = None) -> None:
@@ -277,6 +282,9 @@ class QConfig:
         `LookupError`
             When the widget for a key in the date is missing
         """
+        if self._ignore_changes:
+            return
+        
         master_call = data is None
         if data is None:
             data = self.data
