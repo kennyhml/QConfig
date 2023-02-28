@@ -1,6 +1,12 @@
 # QConfig
 QConfig is a useful tool for PyQt GUI developers, as it makes it easier to save and load the state of the GUI through configuration files. This tool simplifies the process of preserving the current state of the GUI, and provides a range of helpful methods for managing configuration, making it a convenient and efficient solution.
 
+## How to install
+QConfig is available on pypi and can be installed via pip.
+```py
+pip install qtconfig
+```
+
 ## Introduction
 The concept behind the package is a `QConfig` container that takes responsibility for a dictionary of data. Each key in the dictionary gets a `Hook` assigned, which maps the value to its widget.
 
