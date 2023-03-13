@@ -1,1 +1,1 @@
-include src/ark/py.typed
+include src/qconfig/py.typed
