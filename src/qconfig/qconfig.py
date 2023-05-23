@@ -11,8 +11,11 @@ from PySide6.QtWidgets import QWidget
 from ._hook import Hook, build_hook
 from ._xml_tools import dict_to_etree, etree_to_dict, write_to_xml_file
 from .dynamic_loader import QConfigDynamicLoader
-from .exceptions import (HookNotFoundError, WidgetAlreadydHookedError,
-                         WidgetNotFoundError)
+from .exceptions import (
+    HookNotFoundError,
+    WidgetAlreadydHookedError,
+    WidgetNotFoundError,
+)
 
 
 class QConfig:
@@ -89,6 +92,7 @@ class QConfig:
         data: Optional[dict] = None,
         filepath: Optional[str] = None,
         loader: Optional[QConfigDynamicLoader] = None,
+        suppress: Optional[list[str]] = None,
         *,
         recursive: bool = True,
         allow_multiple_hooks: bool = False,
@@ -101,6 +105,7 @@ class QConfig:
         self._save_on_change = save_on_change
         self._dump_on_save = dump_on_save
         self._show_build = show_build
+        self._suppress = suppress or []
 
         self.filepath = filepath
         self.allow_mutliple_hooks = allow_multiple_hooks
@@ -127,7 +132,6 @@ class QConfig:
         if save_on_change:
             self.connect_callback(self.get_data)
 
-
     def __str__(self) -> str:
         return f"QConfig '{self._name}', responsible for {list(self.data.keys())}"
 
@@ -136,7 +140,7 @@ class QConfig:
 
     def __del__(self) -> None:
         """Make sure we 'unhook' the widget when the QConfig gets garbage collected."""
-        self._hooked_widgets.pop(self._name, None)
+        self.destroy()
 
     @property
     def name(self) -> str:
@@ -172,6 +176,11 @@ class QConfig:
         if not self.filepath:
             raise ValueError("Can't dump on save without provided filepath!")
         self._dump_on_save = state
+
+    def destroy(self) -> None:
+        self.disconnect_callback()
+        self._hooked_widgets.pop(self._name, None)
+        del self
 
     def read(self) -> None:
         """Reads the data provided as the `filepath`.
@@ -250,15 +259,18 @@ class QConfig:
             When the widget for a key in the date is missing
         """
         master = data is None
-
         if master:
             data = self.data
             self._ignore_changes = True
+
         assert data is not None
-        
+
         for k, v in data.items():
             if isinstance(v, dict):
                 self.set_data(v)
+                continue
+
+            if k in self._suppress:
                 continue
 
             hook = self._hooks[k]
@@ -292,6 +304,9 @@ class QConfig:
         for k, v in data.items():
             if isinstance(v, dict):
                 self.get_data(v)
+                continue
+
+            if k in self._suppress:
                 continue
 
             hook = self._hooks[k]
@@ -391,21 +406,24 @@ class QConfig:
         self._hooked_widgets[self._name] = []
         widget_names = [w.objectName() for w in widgets]
         for k, v in data.items():
-            if k not in widget_names:
-                raise WidgetNotFoundError(k)
-
-            if not self.allow_mutliple_hooks:
-                self._check_widget_not_hooked(k)
-
             if self._recursive and isinstance(v, dict):
                 self._print_build(f"Found subdict '{k}', hooking recursively...")
                 self._build_widget_hooks(v, widgets)
                 continue
 
+            if k not in widget_names:
+                if k in self._suppress:
+                    continue
+                raise WidgetNotFoundError(k)
+
+            if not self.allow_mutliple_hooks:
+                self._check_widget_not_hooked(k)
+
             self._print_build(f"Building hook for '{k}'...")
             self._hooks[k] = build_hook(k, self._get_widget(widgets, k))
             self._hooked_widgets[self._name].append(k)
             self._print_build(f"Successfully hooked '{k}'! {self._hooks[k]}")
+
 
     def _build_widget_hooks_from_loader(
         self, data: dict, widgets: list[QWidget], loader: QConfigDynamicLoader
